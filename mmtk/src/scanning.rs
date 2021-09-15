@@ -19,7 +19,7 @@ pub(crate) extern "C" fn create_process_edges_work<W: ProcessEdgesWork<VM = Open
 ) -> NewBuffer {
     if !ptr.is_null() {
         let buf = unsafe { Vec::<Address>::from_raw_parts(ptr, length, capacity) };
-        memory_manager::add_work_packet(
+        memory_manager::add_single_threaded_work_packet(
             &SINGLETON,
             WorkBucketStage::Closure,
             W::new(buf, false, &SINGLETON),
