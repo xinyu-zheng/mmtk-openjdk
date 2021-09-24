@@ -258,3 +258,8 @@ pub extern "C" fn get_finalized_object() -> ObjectReference {
         None => unsafe { Address::ZERO.to_object_reference() },
     }
 }
+
+#[no_mangle]
+pub extern "C" fn hash_mask() -> usize {
+    memory_manager::hash_mask(&SINGLETON)
+}

@@ -84,12 +84,14 @@ extern void start_worker(void *tls, void* worker);
 extern size_t free_bytes();
 extern size_t total_bytes();
 
+extern size_t hash_mask();
+
 typedef struct {
     void** buf;
     size_t cap;
 } NewBuffer;
 
-typedef NewBuffer (*ProcessEdgesFn)(void** buf, size_t len, size_t cap);
+typedef NewBuffer (*ProcessEdgesFn)(void** buf, size_t len, size_t cap, size_t id);
 
 /**
  * OpenJDK-specific

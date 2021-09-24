@@ -49,9 +49,10 @@ public:
 
 class MMTkRootsClosure2 : public OopClosure {
   ProcessEdgesFn _process_edges;
-  void** _buffer;
-  size_t _cap;
-  size_t _cursor;
+  void** _buffer[32];
+  size_t _cap[32];
+  size_t _cursor[32];
+  size_t mask;
 
   template <class T>
   void do_oop_work(T* p) {
@@ -61,32 +62,41 @@ class MMTkRootsClosure2 : public OopClosure {
     //   oop fwd = (oop) trace_root_object(_trace, obj);
     //   RawAccess<>::oop_store(p, fwd);
     // }
-    _buffer[_cursor++] = (void*) p;
-    if (_cursor >= _cap) {
-      flush();
+    size_t id = (size_t)p & mask;
+    //printf("mask:%lu, p:%lu, id:%lu\n", mask, (size_t)p, id);
+    if (_buffer[id] == NULL) {
+      //printf("is null\n");
+      NewBuffer buf = _process_edges(NULL, 0, 0, 0);
+      _buffer[id] = buf.buf;
+      _cap[id] = buf.cap;
+      _cursor[id] = 0;
+      //printf("cap:%lu, cursor:%lu\n", _cap[id], _cursor[id]);
+    }
+    _buffer[id][_cursor[id]++] = (void*) p;
+    if (_cursor[id] >= _cap[id]) {
+      flush(id);
     }
   }
 
-  void flush() {
-    if (_cursor > 0) {
-      NewBuffer buf = _process_edges(_buffer, _cursor, _cap);
-      _buffer = buf.buf;
-      _cap = buf.cap;
-      _cursor = 0;
+  void flush(size_t id) {
+    if (_cursor[id] > 0) {
+      NewBuffer buf = _process_edges(_buffer[id], _cursor[id], _cap[id], id);
+      _buffer[id] = buf.buf;
+      _cap[id] = buf.cap;
+      _cursor[id] = 0;
     }
   }
 
 public:
-  MMTkRootsClosure2(ProcessEdgesFn process_edges): _process_edges(process_edges), _cursor(0) {
-    NewBuffer buf = process_edges(NULL, 0, 0);
-    _buffer = buf.buf;
-    _cap = buf.cap;
+  MMTkRootsClosure2(ProcessEdgesFn process_edges): _process_edges(process_edges), _buffer(), mask(hash_mask()) {
   }
 
   ~MMTkRootsClosure2() {
-    if (_cursor > 0) flush();
-    if (_buffer != NULL) {
-      release_buffer(_buffer, _cursor, _cap);
+    for (size_t id = 0; id <= mask; id++) {
+      if (_cursor[id] > 0) flush(id);
+      if (_buffer[id] != NULL) {
+        release_buffer(_buffer[id], _cursor[id], _cap[id]);
+      }
     }
   }
 
