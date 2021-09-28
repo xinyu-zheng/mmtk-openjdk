@@ -194,7 +194,6 @@ impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> TransitiveClosure for ObjectsClosure
         }
         self.0[id].push(slot);
         if self.0[id].len() >= E::CAPACITY {
-            println!("full");
             let mut buf = Vec::new();
             mem::swap(&mut buf, &mut self.0[id]);
 
@@ -214,7 +213,6 @@ impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> TransitiveClosure for ObjectsClosure
 impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> Drop for ObjectsClosure<'a, E> {
     #[inline]
     fn drop(&mut self) {
-        println!("drop");
         let mask = memory_manager::hash_mask(&SINGLETON);
         let mut bufs = vec![Vec::new(); mask + 1];
         mem::swap(&mut bufs, &mut self.0);
