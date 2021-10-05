@@ -188,7 +188,8 @@ pub struct ObjectsClosure<'a, E: ProcessEdgesWork<VM = OpenJDK>>(
 impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> TransitiveClosure for ObjectsClosure<'a, E> {
     #[inline]
     fn process_edge(&mut self, slot: Address) {
-        let id = slot & self.1;
+        let id = (slot >> 4) & self.1;
+        //println!("scan: id:{} ad:{}", id, slot);
         if self.0[id].is_empty() {
             self.0[id].reserve(E::CAPACITY);
         }

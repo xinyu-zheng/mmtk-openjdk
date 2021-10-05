@@ -49,9 +49,9 @@ public:
 
 class MMTkRootsClosure2 : public OopClosure {
   ProcessEdgesFn _process_edges;
-  void** _buffer[32];
-  size_t _cap[32];
-  size_t _cursor[32];
+  void** _buffer[1];
+  size_t _cap[1];
+  size_t _cursor[1];
   size_t mask;
 
   template <class T>
@@ -62,8 +62,8 @@ class MMTkRootsClosure2 : public OopClosure {
     //   oop fwd = (oop) trace_root_object(_trace, obj);
     //   RawAccess<>::oop_store(p, fwd);
     // }
-    size_t id = (size_t)p & mask;
-    //printf("mask:%lu, p:%lu, id:%lu\n", mask, (size_t)p, id);
+    size_t id = ((size_t)p >> 4) & mask;
+    //printf("closure: id:%lu mask:%lu p:%lu\n", id, mask, (size_t)p);
     if (_buffer[id] == NULL) {
       //printf("is null\n");
       NewBuffer buf = _process_edges(NULL, 0, 0, 0);
