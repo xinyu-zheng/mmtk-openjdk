@@ -22,7 +22,6 @@ pub(crate) extern "C" fn create_process_edges_work<W: ProcessEdgesWork<VM = Open
         let buf = unsafe { Vec::<Address>::from_raw_parts(ptr, length, capacity) };
         memory_manager::add_single_threaded_work_packet(
             &SINGLETON,
-            WorkBucketStage::Closure,
             id,
             W::new(buf, false, &SINGLETON),
         );
