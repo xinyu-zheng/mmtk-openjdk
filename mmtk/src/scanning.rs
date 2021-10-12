@@ -25,20 +25,6 @@ pub(crate) extern "C" fn create_process_edges_work<W: ProcessEdgesWork<VM = Open
             id,
             W::new(buf, false, &SINGLETON),
         );
-        //let buf = unsafe { Vec::<Address>::from_raw_parts(ptr, length, capacity) };
-        //let mask = memory_manager::hash_mask(&SINGLETON);
-        //let mut bufs: Vec<Vec<Address>> = vec![Vec::with_capacity(W::CAPACITY); mask + 1];
-        //for address in buf {
-        //    bufs[address & mask].push(address);
-        //}
-        //for (id, b) in bufs.into_iter().enumerate() {
-        //    memory_manager::add_single_threaded_work_packet(
-        //        &SINGLETON,
-        //        WorkBucketStage::Closure,
-        //        id,
-        //        W::new(b, false, &SINGLETON),
-        //    );
-        //}
     }
     let (ptr, _, capacity) = Vec::with_capacity(W::CAPACITY).into_raw_parts();
     NewBuffer { ptr, capacity }

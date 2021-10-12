@@ -1,7 +1,6 @@
 use super::abi::*;
 use super::UPCALLS;
 use crate::{OpenJDK, SINGLETON};
-use mmtk::memory_manager;
 use mmtk::scheduler::GCWorker;
 use mmtk::scheduler::ProcessEdgesWork;
 use mmtk::util::constants::*;
@@ -179,8 +178,7 @@ pub fn scan_object(
 }
 
 pub struct ObjectsClosure<'a, E: ProcessEdgesWork<VM = OpenJDK>>(
-    [Vec<Address>; 1],
-    usize,
+    Vec<Address>,
     &'a mut GCWorker<OpenJDK>,
     PhantomData<E>,
 );
@@ -188,18 +186,14 @@ pub struct ObjectsClosure<'a, E: ProcessEdgesWork<VM = OpenJDK>>(
 impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> TransitiveClosure for ObjectsClosure<'a, E> {
     #[inline]
     fn process_edge(&mut self, slot: Address) {
-        let id = (slot >> 4) & self.1;
-        //println!("scan: id:{} ad:{}", id, slot);
-        if self.0[id].is_empty() {
-            self.0[id].reserve(E::CAPACITY);
+        if self.0.is_empty() {
+            self.0.reserve(E::CAPACITY);
         }
-        self.0[id].push(slot);
-        if self.0[id].len() >= E::CAPACITY {
+        self.0.push(slot);
+        if self.0.len() >= E::CAPACITY {
             let mut buf = Vec::new();
-            mem::swap(&mut buf, &mut self.0[id]);
-
-            self.2
-                .add_single_threaded_work(id, E::new(buf, false, &SINGLETON));
+            mem::swap(&mut buf, &mut self.0);
+            self.1.add_edges::<E>(buf, &SINGLETON);
         }
     }
     fn process_node(&mut self, _object: ObjectReference) {
@@ -210,11 +204,10 @@ impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> TransitiveClosure for ObjectsClosure
 impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> Drop for ObjectsClosure<'a, E> {
     #[inline]
     fn drop(&mut self) {
-        for id in 0..=self.1 {
+        if !self.0.is_empty() {
             let mut buf = Vec::new();
-            mem::swap(&mut buf, &mut self.0[id]);
-            self.2
-                .add_single_threaded_work(id, E::new(buf, false, &SINGLETON));
+            mem::swap(&mut buf, &mut self.0);
+            self.1.add_edges::<E>(buf, &SINGLETON);
         }
     }
 }
@@ -223,8 +216,7 @@ pub fn scan_objects_and_create_edges_work<E: ProcessEdgesWork<VM = OpenJDK>>(
     objects: &[ObjectReference],
     worker: &mut GCWorker<OpenJDK>,
 ) {
-    let mask = memory_manager::hash_mask(&SINGLETON);
-    let mut closure = ObjectsClosure::<E>(Default::default(), mask, worker, PhantomData);
+    let mut closure = ObjectsClosure::<E>(Default::default(), worker, PhantomData);
     for object in objects {
         scan_object(
             *object,
