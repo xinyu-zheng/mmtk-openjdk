@@ -179,7 +179,7 @@ pub fn scan_object(
 }
 
 pub struct ObjectsClosure<'a, E: ProcessEdgesWork<VM = OpenJDK>>(
-    [Vec<Address>; 1],
+    [Vec<Address>; 2],
     usize,
     &'a mut GCWorker<OpenJDK>,
     PhantomData<E>,

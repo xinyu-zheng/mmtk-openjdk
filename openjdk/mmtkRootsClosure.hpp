@@ -49,9 +49,9 @@ public:
 
 class MMTkRootsClosure2 : public OopClosure {
   ProcessEdgesFn _process_edges;
-  void** _buffer[1];
-  size_t _cap[1];
-  size_t _cursor[1];
+  void** _buffer[2];
+  size_t _cap[2];
+  size_t _cursor[2];
   size_t mask;
 
   template <class T>
