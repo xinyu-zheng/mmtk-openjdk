@@ -73,4 +73,10 @@ impl Collection<OpenJDK> for VMCollection {
             ((*UPCALLS).schedule_finalizer)();
         }
     }
+
+    fn process_weak_refs<E: ProcessEdgesWork<VM = OpenJDK>>(_worker: &mut GCWorker<OpenJDK>) {
+        unsafe {
+            ((*UPCALLS).process_weak_refs)();
+        }
+    }
 }

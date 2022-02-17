@@ -383,7 +383,8 @@ void MMTkHeap::scan_oop_storage_set_roots(OopClosure& cl) {
     OopStorageSet::strong_oops_do(&cl);
 }
 void MMTkHeap::scan_weak_processor_roots(OopClosure& cl) {
-  WeakProcessor::oops_do(&cl); // (really needed???)
+  // Looks like this will keep all the weak-ref alive...
+  // WeakProcessor::oops_do(&cl); // (really needed???)
 }
 void MMTkHeap::scan_vm_thread_roots(OopClosure& cl) {
   ResourceMark rm;
