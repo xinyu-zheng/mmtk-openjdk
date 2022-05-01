@@ -1,6 +1,7 @@
 use super::abi::*;
 use super::UPCALLS;
 use crate::{OpenJDK, SINGLETON};
+use mmtk::memory_manager;
 use mmtk::scheduler::ProcessEdgesWork;
 use mmtk::scheduler::{GCWorker, WorkBucketStage};
 use mmtk::util::constants::*;
@@ -193,7 +194,8 @@ impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> TransitiveClosure for ObjectsClosure
         if self.0.len() >= E::CAPACITY {
             let mut new_edges = Vec::new();
             mem::swap(&mut new_edges, &mut self.0);
-            self.1.add_work(
+            memory_manager::add_single_threaded_work_packet(
+                &SINGLETON,
                 WorkBucketStage::Closure,
                 E::new(new_edges, false, &SINGLETON),
             );
@@ -209,7 +211,8 @@ impl<'a, E: ProcessEdgesWork<VM = OpenJDK>> Drop for ObjectsClosure<'a, E> {
     fn drop(&mut self) {
         let mut new_edges = Vec::new();
         mem::swap(&mut new_edges, &mut self.0);
-        self.1.add_work(
+        memory_manager::add_single_threaded_work_packet(
+            &SINGLETON,
             WorkBucketStage::Closure,
             E::new(new_edges, false, &SINGLETON),
         );
